@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="style01.css">
+</head>
+
+<body>
+    <div class="panel">Teachable Machine Image Model</div>
+    <!-- <button type="button" onclick="init()">Start</button> -->
+    <!-- <div id="webcam-container"></div> -->
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <main class="main_full">
+        <div class="container">
+            <div class="panel">
+                <div class="button_outer">
+                    <div class="btn_upload">
+                        <input type="file" id="upload_file" name="" onclick = "init()">
+                        Upload Image
+                    </div>
+                    <div class="processing_bar"></div>
+                    <div class="success_box"></div>
+                </div>
+            </div>
+            <div class="error_msg"></div>
+            <div class="uploaded_file_view" id="uploaded_view">
+                <span class="file_remove">X</span>
+            </div>
+        </div>
+    </main>
+    <div class="panel" id="label-container"></div>
+    <script>
+
+        var btnUpload = $("#upload_file"),
+            btnOuter = $(".button_outer");
+        btnUpload.on("change", function (e) {
+            var ext = btnUpload.val().split('.').pop().toLowerCase();
+            if ($.inArray(ext, ['gif', 'png', 'jpg', 'jpeg']) == -1) {
+                $(".error_msg").text("Not an Image...");
+            } else {
+                $(".error_msg").text("");
+                btnOuter.addClass("file_uploading");
+                setTimeout(function () {
+                    btnOuter.addClass("file_uploaded");
+                }, 3000);
+                var uploadedFile = URL.createObjectURL(e.target.files[0]);
+                setTimeout(function () {
+                    $("#uploaded_view").append('<img src="' + uploadedFile + '" />').addClass("show");
+                    //init();
+
+                    console.log(`停止前: ${getDisplayDate()} 秒`)
+                    const sleep = waitTime => new Promise(resolve => setTimeout(resolve, waitTime));
+
+                    sleep(500)
+                        .then(() => {
+                            // 5秒停止後の処理
+                            console.log(`停止後: ${getDisplayDate()} 秒`)
+                            predict();
+                        });
+
+                    //現在時刻を取得
+                    function getDisplayDate() {
+                        let date = new Date();
+                        let Hour = ('0' + date.getHours()).slice(-2)
+                        let Minute = ('0' + date.getMinutes()).slice(-2)
+                        let Second = ('0' + date.getSeconds()).slice(-2)
+
+                        return Hour + ':' + Minute + ':' + Second
+                    }
+                }, 3500);
+
+
+            }
+        });
+        $(".file_remove").on("click", function (e) {
+            $("#uploaded_view").removeClass("show");
+            $("#uploaded_view").find("img").remove();
+            btnOuter.removeClass("file_uploading");
+            btnOuter.removeClass("file_uploaded");
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script type="text/javascript">
+        // More API functions here:
+        // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
+
+        // the link to your model provided by Teachable Machine export panel
+        const URL_tm = "https://teachablemachine.withgoogle.com/models/6tYXACjNO/";
+
+        let model, webcam, labelContainer, maxPredictions;
+
+        // Load the image model and setup the webcam
+        async function init() {
+            const modelURL = URL_tm + "model.json";
+            const metadataURL = URL_tm + "metadata.json";
+
+            // load the model and metadata
+            // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+            // or files from your local hard drive
+            // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+            model = await tmImage.load(modelURL, metadataURL);
+            maxPredictions = model.getTotalClasses();
+
+            // // Convenience function to setup a webcam
+            // const flip = true; // whether to flip the webcam
+            // webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
+            // await webcam.setup(); // request access to the webcam
+            // await webcam.play();
+            // window.requestAnimationFrame(loop);
+
+            // append elements to the DOM
+            // document.getElementById("webcam-container").appendChild(webcam.canvas);
+            labelContainer = document.getElementById("label-container");
+            for (let i = 0; i < maxPredictions; i++) { // and class labels
+                labelContainer.appendChild(document.createElement("div"));
+            }
+        }
+
+        // async function loop() {
+        //     webcam.update(); // update the webcam frame
+        //     await predict();
+        //     window.requestAnimationFrame(loop);
+        // }
+
+        // run the webcam image through the image model
+        async function predict() {
+            const uploadedImage = document.getElementById("uploaded_view").querySelector("img");
+            if (uploadedImage) {
+                const prediction = await model.predict(uploadedImage);
+                for (let i = 0; i < maxPredictions; i++) {
+                    const classPrediction =
+                        prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+                    labelContainer.childNodes[i].innerHTML = classPrediction;
+                }
+            }
+        }
+    </script>
+
+</body>
+<!-- Thank you for your support! Good LUCK!!
+    
+Copyright (c) 2023 by Mahtab Alam (https://codepen.io/mahtab-alam/pen/MZVvzo)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. -->
+
+
+</html>
